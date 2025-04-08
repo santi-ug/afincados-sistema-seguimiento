@@ -1,0 +1,71 @@
+// npx prisma migrate dev --name init  
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Empleados {
+  id        Int         @id @default(autoincrement())
+  nombre    String
+  Registros Registros[]
+}
+
+// model Lotes {
+//   id               Int      @id @default(autoincrement())
+//   codigoLote       String   @unique
+//   fechaCreacion    DateTime
+//   fechaVencimiento DateTime
+//   cantidad         Int
+
+//   // Relación many-to-one con Producto
+//   productoId Int
+//   // producto   Producto @relation(fields: [productoId], references: [id])
+// }
+
+model Productos {
+  id       String @id
+  nombre   String
+  gramajes Int[]
+
+  // Use the enum for categoria
+  categoria Categoria
+  Registros Registros[]
+}
+
+enum Categoria {
+  Condimentos
+  Hierbas
+  Reposteria
+}
+
+model ArchivoExcels {
+  id         Int         @id @default(autoincrement())
+  fechaCarga DateTime    @default(now())
+  filePath   String
+  Registros  Registros[]
+}
+
+model Registros {
+  id         Int       @id @default(autoincrement())
+  productoId String // Campo proveniente de la fila del Excel
+  producto   Productos @relation(fields: [productoId], references: [id])
+  gramaje    Int // Campo proveniente de la fila del Excel - debe validar que esté en la lista de gramajes del producto
+  cantidad   Int // Campo proveniente de la fila del Excel
+
+  // Luego se agrega a Registro la informacion ingresado por el usuario
+  empleadoId      Int? // Ingresado por el usuario
+  empleado        Empleados? @relation(fields: [empleadoId], references: [id])
+  fechaProduccion DateTime? // Ingresado por el usuario
+
+  // Luego se agrega a Registro la informacion sacada de lo que ingreso el usuario
+  lote             String? // Sacado de informacion ingresado por el usuario
+  fechaVencimiento DateTime? // Sacado de informacion ingresado por el usuario
+
+  archivoExcelId Int? // Campo proveniente de la fila del Excel
+  archivoExcel   ArchivoExcels? @relation(fields: [archivoExcelId], references: [id])
+}
