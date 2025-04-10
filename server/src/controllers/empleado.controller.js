@@ -5,11 +5,35 @@ class EmpleadoController {
   async create(req, res) {
     try {
       const { nombre } = req.body;
+
+      if (!nombre || nombre.trim().split(/\s+/).length < 2) {
+        return res.status(400).json({
+          error: "El nombre debe contener al menos dos palabras.",
+        });
+      }
+
+      const capitalizeWords = (str) =>
+        str
+          .toLowerCase()
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+
+      const formattedNombre = capitalizeWords(nombre);
+
+      const lastEmpleado = await prisma.empleados.findFirst({
+        orderBy: { id: "desc" },
+      });
+
+      const newId = lastEmpleado ? lastEmpleado.id + 1 : 1;
+
       const empleado = await prisma.empleados.create({
         data: {
-          nombre,
+          id: newId,
+          nombre: formattedNombre,
         },
       });
+
       res.status(201).json(empleado);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -51,12 +75,29 @@ class EmpleadoController {
     try {
       const { id } = req.params;
       const { nombre } = req.body;
+
+      if (!nombre || nombre.trim().split(/\s+/).length < 2) {
+        return res.status(400).json({
+          error: "El nombre debe contener al menos dos palabras.",
+        });
+      }
+
+      const capitalizeWords = (str) =>
+        str
+          .toLowerCase()
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+
+      const formattedNombre = capitalizeWords(nombre);
+
       const empleado = await prisma.empleados.update({
-        where: { id: parseInt(id) },
+        where: { id: Number(id) },
         data: {
-          nombre,
+          nombre: formattedNombre,
         },
       });
+
       res.json(empleado);
     } catch (error) {
       res.status(500).json({ error: error.message });
