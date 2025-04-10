@@ -2,29 +2,30 @@ import { Main } from '@/components/layout/main';
 import { useEffect, useState } from 'react';
 import { getProductos } from '../../lib/api/productos';
 import { Producto } from '../../lib/schemas/productos';
+import { Dialogs } from './components/dialogs';
 import { columns } from './components/productos-columns';
 import { ProductosPrimaryButton } from './components/productos-primary-buttons';
 import { ProductosTable } from './components/productos-table';
-import ProductosProvider from './context/products-context';
+import { ProductosProvider } from './context/products-context';
 
 export default function Productos() {
 	const [productos, setProductos] = useState<Producto[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		const fetchProductos = async () => {
-			try {
-				const data = await getProductos();
-				setProductos(data);
-			} catch (err) {
-				setError('Error fetching productos');
-				console.error(err);
-			} finally {
-				setLoading(false);
-			}
-		};
+	const fetchProductos = async () => {
+		try {
+			const data = await getProductos();
+			setProductos(data);
+		} catch (err) {
+			setError('Error fetching productos');
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
 
+	useEffect(() => {
 		fetchProductos();
 	}, []);
 
@@ -54,6 +55,8 @@ export default function Productos() {
 					<ProductosTable data={productos} columns={columns} />
 				</div>
 			</Main>
+
+			<Dialogs refetchProductos={fetchProductos} />
 		</ProductosProvider>
 	);
 }

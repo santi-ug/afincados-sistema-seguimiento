@@ -19,7 +19,7 @@ export const productoSchema = z.object({
 export const productosSchema = z.array(productoSchema);
 
 // Create Product
-export const createProductoSchema = z.object({
+export const productoInputSchema = z.object({
 	nombre: z.string().min(1, 'Nombre es requerido'),
 	gramajes: z.array(z.number()).min(1, 'Gramajes es requerido'),
 	categoria: categoriaSchema.refine(
@@ -29,9 +29,6 @@ export const createProductoSchema = z.object({
 		}
 	),
 });
-
-// Update Product (igual que create)
-export const updateProductoSchema = createProductoSchema;
 
 // Deleteable Product
 export const deleteableProductoSchema = productoSchema.refine(
@@ -44,5 +41,4 @@ export const deleteableProductoSchema = productoSchema.refine(
 export type Categoria = z.infer<typeof categoriaSchema>;
 export type Producto = z.infer<typeof productoSchema>;
 export type Productos = z.infer<typeof productosSchema>;
-export type CreateProducto = z.infer<typeof createProductoSchema>;
-export type UpdateProducto = z.infer<typeof updateProductoSchema>;
+export type ProductoInput = z.infer<typeof productoInputSchema>;

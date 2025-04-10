@@ -8,34 +8,14 @@ import { DataTableRowActions } from './data-table-row-actions';
 
 export const columns: ColumnDef<Producto>[] = [
 	{
-		id: 'select',
-		header: ({ table }) => (
-			<Checkbox
-				checked={
-					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && 'indeterminate')
-				}
-				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-				aria-label='Select all'
-				className='translate-y-[2px]'
-			/>
+		accessorKey: 'id',
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title='Codigo' className='ml-2' />
 		),
 		cell: ({ row }) => (
-			<Checkbox
-				checked={row.getIsSelected()}
-				onCheckedChange={(value) => row.toggleSelected(!!value)}
-				aria-label='Select row'
-				className='translate-y-[2px]'
-			/>
+			<div className='ml-2 max-w-40 truncate'>{row.getValue('id')}</div>
 		),
-		enableSorting: false,
 		enableHiding: false,
-		meta: {
-			className: cn(
-				'sticky left-0 z-10 rounded-tl',
-				'bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted'
-			),
-		},
 	},
 	{
 		accessorKey: 'nombre',
@@ -77,6 +57,36 @@ export const columns: ColumnDef<Producto>[] = [
 			);
 		},
 		enableSorting: false,
+	},
+	{
+		id: 'select',
+		header: ({ table }) => (
+			<Checkbox
+				checked={
+					table.getIsAllPageRowsSelected() ||
+					(table.getIsSomePageRowsSelected() && 'indeterminate')
+				}
+				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+				aria-label='Select all'
+				className='mb-3'
+			/>
+		),
+		cell: ({ row }) => (
+			<Checkbox
+				checked={row.getIsSelected()}
+				onCheckedChange={(value) => row.toggleSelected(!!value)}
+				aria-label='Select row'
+				className='mb-2'
+			/>
+		),
+		enableSorting: false,
+		enableHiding: false,
+		meta: {
+			className: cn(
+				'sticky left-0 z-10 rounded-tl',
+				'bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted'
+			),
+		},
 	},
 	{
 		id: 'actions',

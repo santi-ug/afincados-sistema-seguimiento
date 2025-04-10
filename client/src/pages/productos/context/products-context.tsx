@@ -1,45 +1,44 @@
 import useDialogState from '@/hooks/use-dialog-state';
+import { Producto } from '@/lib/schemas/productos';
 import {
 	createContext,
-	Dispatch,
-	ReactNode,
-	SetStateAction,
 	useContext,
 	useState,
+	type Dispatch,
+	type ReactNode,
+	type SetStateAction,
 } from 'react';
-import { Producto } from '../../../lib/schemas/productos';
 
 type ProductsDialogType = 'add' | 'edit' | 'delete';
 
 interface ProductsContextType {
 	open: ProductsDialogType | null;
-	setOpen: (str: ProductsDialogType | null) => void;
+	setOpen: (value: ProductsDialogType | null) => void;
 	currentRow: Producto | null;
 	setCurrentRow: Dispatch<SetStateAction<Producto | null>>;
 }
 
-const ProductosContext = createContext<ProductsContextType | null>(null);
+const ProductosContext = createContext<ProductsContextType | undefined>(
+	undefined
+);
 
-interface Props {
-	children: ReactNode;
-}
-
-export default function ProductosProvider({ children }: Props) {
+export function ProductosProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useDialogState<ProductsDialogType>(null);
 	const [currentRow, setCurrentRow] = useState<Producto | null>(null);
 
 	return (
-		<ProductosContext value={{ open, setOpen, currentRow, setCurrentRow }}>
+		<ProductosContext.Provider
+			value={{ open, setOpen, currentRow, setCurrentRow }}
+		>
 			{children}
-		</ProductosContext>
+		</ProductosContext.Provider>
 	);
 }
 
-export const useProductos = () => {
-	const productosContext = useContext(ProductosContext);
-
-	if (!productosContext) {
-		throw new Error('useProducts must be used within a ProductsProvider');
+export function useProductos() {
+	const context = useContext(ProductosContext);
+	if (!context) {
+		throw new Error('useProductos must be used inside a ProductosProvider');
 	}
-	return productosContext;
-};
+	return context;
+}
