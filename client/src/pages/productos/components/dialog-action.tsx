@@ -31,10 +31,21 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 const formSchema = productoInputSchema.extend({
-	gramajes: z.string().min(1, 'Ingrese al menos un gramaje.'), // as string in the form
+	nombre: z
+		.string()
+		.min(1, 'Nombre es requerido.')
+		.regex(
+			/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/,
+			'El nombre solo puede contener letras y espacios.'
+		),
+
+	gramajes: z
+		.string()
+		.min(1, 'Ingrese al menos un gramaje.')
+		.regex(/^(\d+\s*,\s*)*\d+$/, 'Ingrese solo números separados por comas.'),
+
 	isEdit: z.boolean(),
 });
-
 type ProductoForm = z.infer<typeof formSchema>;
 
 interface Props {
@@ -70,7 +81,6 @@ export function DialogAction({
 	});
 
 	const onSubmit = async (values: ProductoForm) => {
-		// You might want to transform gramajes back to array here if needed
 		const payload = {
 			...values,
 			gramajes: values.gramajes.split(',').map((g) => Number(g.trim())),
@@ -78,21 +88,34 @@ export function DialogAction({
 
 		try {
 			if (isEdit && currentRow) {
-				await updateProducto(currentRow.id, payload); // Assuming you have an update function
+				await updateProducto(currentRow.id, payload);
 				toast.success('Producto actualizado');
 			} else {
 				await createProducto(payload);
 				toast.success('Producto creado');
 			}
 
-			await refetchProductos(); // Refetch the products after creating/updating
-		} catch (error) {
+			await refetchProductos();
+			form.reset();
+			onOpenChange(false);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} catch (error: any) {
 			console.error('Error submitting form:', error);
-			toast.error('Hubo un error al guardar el producto.');
-		}
 
-		form.reset();
-		onOpenChange(false);
+			if (
+				error.response?.status === 400 &&
+				error.response?.data?.error?.includes('producto con ese nombre')
+			) {
+				// ✅ Set validation error manually
+				form.setError('nombre', {
+					type: 'manual',
+					message: 'Ya existe un producto con ese nombre.',
+				});
+			} else {
+				// Generic error
+				toast.error('Hubo un error al guardar el producto.');
+			}
+		}
 	};
 
 	return (

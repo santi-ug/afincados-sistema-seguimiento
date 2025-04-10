@@ -26,7 +26,23 @@ export const columns: ColumnDef<Producto>[] = [
 			<div className='max-w-40 truncate'>{row.getValue('nombre')}</div>
 		),
 		enableHiding: false,
+		filterFn: (row, columnId, filterValue) => {
+			const value = row.getValue<string>(columnId) || '';
+
+			// Normalize to remove accents and lowercase
+			const normalizedValue = value
+				.normalize('NFD')
+				.replace(/[\u0300-\u036f]/g, '')
+				.toLowerCase();
+			const normalizedFilter = filterValue
+				.normalize('NFD')
+				.replace(/[\u0300-\u036f]/g, '')
+				.toLowerCase();
+
+			return normalizedValue.includes(normalizedFilter);
+		},
 	},
+
 	{
 		accessorKey: 'categoria',
 		header: ({ column }) => (
