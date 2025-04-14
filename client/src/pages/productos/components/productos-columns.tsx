@@ -67,7 +67,9 @@ export const columns: ColumnDef<Producto>[] = [
 			return (
 				<div className='flex flex-wrap gap-1'>
 					{gramajes.map((g) => (
-						<Badge key={g}>{g}g</Badge>
+						<Badge variant='outline' key={g}>
+							{g}g
+						</Badge>
 					))}
 				</div>
 			);

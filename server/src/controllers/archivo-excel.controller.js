@@ -79,6 +79,7 @@ class ArchivoExcelController {
       return res.status(200).json({
         message: "Archivo procesado correctamente.",
         filePath: file.path,
+        archivoExcelId: archivoExcel.id,
       });
     } catch (error) {
       console.error("Error procesando archivo", error);

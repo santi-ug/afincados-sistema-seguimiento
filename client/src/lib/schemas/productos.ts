@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Categoria
-export const categoriaSchema = z.enum(['Hierbas', 'Condimentos', 'Reposteria']);
+export const categoriaSchema = z.enum(['CONDIMENTO', 'HIERBAS', 'REPOSTERIA']);
 
 // Categoria Options
 export const categoriaOptions = categoriaSchema.options;

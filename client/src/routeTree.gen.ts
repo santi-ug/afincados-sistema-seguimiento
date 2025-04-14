@@ -14,6 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as ProductosImport } from './routes/productos'
 import { Route as EmpleadosImport } from './routes/empleados'
 import { Route as IndexImport } from './routes/index'
+import { Route as RegistrosUploadArchivoExcelIdImport } from './routes/registros/upload/$archivoExcelId'
 
 // Create/Update Routes
 
@@ -34,6 +35,13 @@ const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
 } as any)
+
+const RegistrosUploadArchivoExcelIdRoute =
+  RegistrosUploadArchivoExcelIdImport.update({
+    id: '/registros/upload/$archivoExcelId',
+    path: '/registros/upload/$archivoExcelId',
+    getParentRoute: () => rootRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -60,6 +68,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductosImport
       parentRoute: typeof rootRoute
     }
+    '/registros/upload/$archivoExcelId': {
+      id: '/registros/upload/$archivoExcelId'
+      path: '/registros/upload/$archivoExcelId'
+      fullPath: '/registros/upload/$archivoExcelId'
+      preLoaderRoute: typeof RegistrosUploadArchivoExcelIdImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -69,12 +84,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/empleados': typeof EmpleadosRoute
   '/productos': typeof ProductosRoute
+  '/registros/upload/$archivoExcelId': typeof RegistrosUploadArchivoExcelIdRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/empleados': typeof EmpleadosRoute
   '/productos': typeof ProductosRoute
+  '/registros/upload/$archivoExcelId': typeof RegistrosUploadArchivoExcelIdRoute
 }
 
 export interface FileRoutesById {
@@ -82,14 +99,24 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/empleados': typeof EmpleadosRoute
   '/productos': typeof ProductosRoute
+  '/registros/upload/$archivoExcelId': typeof RegistrosUploadArchivoExcelIdRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/empleados' | '/productos'
+  fullPaths:
+    | '/'
+    | '/empleados'
+    | '/productos'
+    | '/registros/upload/$archivoExcelId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/empleados' | '/productos'
-  id: '__root__' | '/' | '/empleados' | '/productos'
+  to: '/' | '/empleados' | '/productos' | '/registros/upload/$archivoExcelId'
+  id:
+    | '__root__'
+    | '/'
+    | '/empleados'
+    | '/productos'
+    | '/registros/upload/$archivoExcelId'
   fileRoutesById: FileRoutesById
 }
 
@@ -97,12 +124,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EmpleadosRoute: typeof EmpleadosRoute
   ProductosRoute: typeof ProductosRoute
+  RegistrosUploadArchivoExcelIdRoute: typeof RegistrosUploadArchivoExcelIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EmpleadosRoute: EmpleadosRoute,
   ProductosRoute: ProductosRoute,
+  RegistrosUploadArchivoExcelIdRoute: RegistrosUploadArchivoExcelIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -117,7 +146,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/empleados",
-        "/productos"
+        "/productos",
+        "/registros/upload/$archivoExcelId"
       ]
     },
     "/": {
@@ -128,6 +158,9 @@ export const routeTree = rootRoute
     },
     "/productos": {
       "filePath": "productos.tsx"
+    },
+    "/registros/upload/$archivoExcelId": {
+      "filePath": "registros/upload/$archivoExcelId.tsx"
     }
   }
 }

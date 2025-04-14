@@ -7,7 +7,10 @@ export function EmpleadosPrimaryButton() {
 
 	return (
 		<div className='flex'>
-			<Button className='space-x-1' onClick={() => setOpen('add')}>
+			<Button
+				className='space-x-1 cursor-pointer'
+				onClick={() => setOpen('add')}
+			>
 				<span>Crear Empleado</span> <Plus size={18} />
 			</Button>
 		</div>

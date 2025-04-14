@@ -1,8 +1,52 @@
 import { PrismaClient } from "@prisma/client";
+import {
+  buildDespachoExcel,
+  buildEmpaqueExcel,
+  buildLiberacionExcel,
+} from "../services/excel.service.js";
 
 const prisma = new PrismaClient();
 
 class RegistroController {
+  async downloadExcel(req, res) {
+    const { startDate, endDate, format } = req.body;
+
+    const registros = await prisma.registros.findMany({
+      where: {
+        fechaProduccion: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      },
+      include: {
+        producto: true,
+        empleado: true,
+      },
+    });
+
+    let workbook;
+    if (format === "liberacion") {
+      workbook = await buildLiberacionExcel(registros);
+    } else if (format === "despacho") {
+      workbook = await buildDespachoExcel(registros);
+    } else if (format === "empaque") {
+      workbook = await buildEmpaqueExcel(registros);
+    } else {
+      return res.status(400).json({ error: "Formato inválido." });
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=registros-${format}.xlsx`
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.send(buffer);
+  }
+
   async getAll(req, res) {
     try {
       const registros = await prisma.registros.findMany({
@@ -36,10 +80,50 @@ class RegistroController {
       res.status(500).json({ error: "Internal server error" });
     }
   }
+
+  async getByArchivoExcelId(req, res) {
+    const { archivoExcelId } = req.params;
+    const registros = await prisma.registros.findMany({
+      where: {
+        archivoExcelId: parseInt(archivoExcelId),
+      },
+      include: {
+        producto: true,
+        empleado: true,
+      },
+    });
+    res.json(registros);
+  }
+
   async update(req, res) {
     try {
       const { id } = req.params;
-      const { empleadoId, fechaProduccion, lote, fechaVencimiento } = req.body;
+      const {
+        empleadoId,
+        fechaProduccion,
+        lote,
+        fechaVencimiento,
+        materialType,
+        condVerificado,
+        hierbasVerificado,
+        reposteriaVerificado,
+        empaqueVerificado,
+        paquetesCantidad,
+        accionResultado,
+        cliente,
+        paramCalidadEmpaque,
+        paramCalidadPeso,
+        paramCalidadSinPresenciaDeSustanciasExtranas,
+        hora,
+        observaciones,
+        olor,
+        color,
+        sabor,
+        varProcesoConforme,
+        empaqueConforme,
+        libera,
+        accionesCorrectivas,
+      } = req.body;
 
       const registroActualizado = await prisma.registros.update({
         where: { id: parseInt(id) },
@@ -52,6 +136,26 @@ class RegistroController {
           fechaVencimiento: fechaVencimiento
             ? new Date(fechaVencimiento)
             : undefined,
+          materialType: materialType || undefined,
+          condVerificado,
+          hierbasVerificado,
+          reposteriaVerificado,
+          empaqueVerificado,
+          paquetesCantidad,
+          accionResultado,
+          cliente,
+          paramCalidadEmpaque,
+          paramCalidadPeso,
+          paramCalidadSinPresenciaDeSustanciasExtranas,
+          hora: hora,
+          observaciones,
+          olor,
+          color,
+          sabor,
+          varProcesoConforme,
+          empaqueConforme,
+          libera,
+          accionesCorrectivas,
         },
       });
 
@@ -61,6 +165,71 @@ class RegistroController {
       });
     } catch (error) {
       console.error("Error actualizando registro:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+
+  async bulkUpdate(req, res) {
+    console.log("Entrando a bulkUpdate...");
+
+    try {
+      const { registros } = req.body;
+
+      console.log("Registros recibidos en backend:", registros);
+
+      console.log(
+        "Registros recibidos en backend:",
+        JSON.stringify(registros, null, 2)
+      );
+
+      if (!Array.isArray(registros) || registros.length === 0) {
+        return res.status(400).json({ error: "No registros provided." });
+      }
+
+      const updatePromises = registros.map((registro) => {
+        return prisma.registros.update({
+          where: { id: registro.id },
+          data: {
+            empleadoId: registro.empleadoId
+              ? parseInt(registro.empleadoId)
+              : undefined,
+            fechaProduccion: registro.fechaProduccion
+              ? new Date(registro.fechaProduccion)
+              : undefined,
+            lote: registro.lote || undefined,
+            fechaVencimiento: registro.fechaVencimiento
+              ? new Date(registro.fechaVencimiento)
+              : undefined,
+            materialType: registro.materialType || undefined,
+            condVerificado: registro.condVerificado,
+            hierbasVerificado: registro.hierbasVerificado,
+            reposteriaVerificado: registro.reposteriaVerificado,
+            empaqueVerificado: registro.empaqueVerificado,
+            paquetesCantidad: registro.paquetesCantidad,
+            accionResultado: registro.accionResultado,
+            cliente: registro.cliente,
+            paramCalidadEmpaque: registro.paramCalidadEmpaque,
+            paramCalidadPeso: registro.paramCalidadPeso,
+            paramCalidadSinPresenciaDeSustanciasExtranas:
+              registro.paramCalidadSinPresenciaDeSustanciasExtranas,
+            hora: registro.hora,
+            observaciones: registro.observaciones,
+            olor: registro.olor,
+            color: registro.color,
+            sabor: registro.sabor,
+            varProcesoConforme: registro.varProcesoConforme,
+            empaqueConforme: registro.empaqueConforme,
+            libera: registro.libera,
+            accionesCorrectivas: registro.accionesCorrectivas,
+          },
+        });
+      });
+
+      await Promise.all(updatePromises);
+
+      res.json({ message: "Registros actualizados correctamente." });
+    } catch (error) {
+      console.error("Error en actualización masiva:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }

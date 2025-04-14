@@ -15,18 +15,6 @@ model Empleados {
   Registros Registros[]
 }
 
-// model Lotes {
-//   id               Int      @id @default(autoincrement())
-//   codigoLote       String   @unique
-//   fechaCreacion    DateTime
-//   fechaVencimiento DateTime
-//   cantidad         Int
-
-//   // Relación many-to-one con Producto
-//   productoId Int
-//   // producto   Producto @relation(fields: [productoId], references: [id])
-// }
-
 model Productos {
   id       String @id
   nombre   String
@@ -38,9 +26,9 @@ model Productos {
 }
 
 enum Categoria {
-  Condimentos
-  Hierbas
-  Reposteria
+  CONDIMENTO
+  HIERBAS
+  REPOSTERIA
 }
 
 model ArchivoExcels {
@@ -50,6 +38,17 @@ model ArchivoExcels {
   Registros  Registros[]
 }
 
+enum MaterialType {
+  CONDIMENTO
+  HIERBAS
+  REPOSTERIA
+}
+
+enum AccionResultado {
+  AC
+  RE
+}
+
 model Registros {
   id         Int       @id @default(autoincrement())
   productoId String // Campo proveniente de la fila del Excel
@@ -57,14 +56,41 @@ model Registros {
   gramaje    Int // Campo proveniente de la fila del Excel - debe validar que esté en la lista de gramajes del producto
   cantidad   Int // Campo proveniente de la fila del Excel
 
-  // Luego se agrega a Registro la informacion ingresado por el usuario
-  empleadoId      Int? // Ingresado por el usuario
-  empleado        Empleados? @relation(fields: [empleadoId], references: [id])
-  fechaProduccion DateTime? // Ingresado por el usuario
+  // excel 1
+  fechaProduccion      DateTime? // Ingresado por el usuario
+  materialType         MaterialType?
+  condVerificado       Boolean?
+  hierbasVerificado    Boolean?
+  reposteriaVerificado Boolean?
+  empaqueVerificado    Boolean?
+  empleadoId           Int?
+  empleado             Empleados?       @relation(fields: [empleadoId], references: [id])
+  nombreEmpleado       String?
+  paquetesCantidad     Int?
+  accionResultado      AccionResultado?
+  cliente              String?
+
+  // excel 2
+  nombreProducto                               String?
+  lote                                         String?
+  fechaVencimiento                             DateTime?
+  estado                                       Boolean?
+  paramCalidadEmpaque                          Boolean?
+  paramCalidadPeso                             Boolean?
+  paramCalidadSinPresenciaDeSustanciasExtranas Boolean?
+  hora                                         String?
+  observaciones                                String?
+
+  // excel 3
+  olor                Boolean?
+  color               Boolean?
+  sabor               Boolean?
+  varProcesoConforme  Boolean?
+  empaqueConforme     Boolean?
+  libera              Boolean?
+  accionesCorrectivas String?
 
   // Luego se agrega a Registro la informacion sacada de lo que ingreso el usuario
-  lote             String? // Sacado de informacion ingresado por el usuario
-  fechaVencimiento DateTime? // Sacado de informacion ingresado por el usuario
 
   archivoExcelId Int? // Campo proveniente de la fila del Excel
   archivoExcel   ArchivoExcels? @relation(fields: [archivoExcelId], references: [id])
