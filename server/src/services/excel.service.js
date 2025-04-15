@@ -21,6 +21,8 @@ async function buildLiberacionExcel(registros) {
 
   let currentRow = 8;
 
+  console.log("Registros:", registros);
+
   for (const registro of registros) {
     const row = worksheet.getRow(currentRow++);
 

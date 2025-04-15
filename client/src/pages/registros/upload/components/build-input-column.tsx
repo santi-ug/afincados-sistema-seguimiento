@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Registro } from '@/lib/schemas/registros';
 import { ColumnDef } from '@tanstack/react-table';
-import { DatePickerCell } from './date-picker-cell';
+import { DatePickerCell } from '../../../../components/date-picker-cell';
 import { DatePickerHeader } from './date-picker-header';
 
 import { DataTableColumnHeader } from './data-table-column-header';

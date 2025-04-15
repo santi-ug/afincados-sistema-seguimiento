@@ -10,6 +10,7 @@ import { Empleado } from '@/lib/schemas/empleados';
 import { Producto } from '@/lib/schemas/productos'; // 🚨 Import Producto type
 import { Registro, RegistroUpdate } from '@/lib/schemas/registros';
 import { Route } from '@/routes/registros/upload/$archivoExcelId';
+import { useRouter } from '@tanstack/react-router'; // <-- Import TanStack router
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import DownloadExcelsButton from './components/download-excels-buttons';
@@ -25,6 +26,8 @@ export default function RegistrosUploadPage() {
 	const [empleados, setEmpleados] = useState<Empleado[]>([]); // 🚨 Import Empleado type
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+
+	const router = useRouter(); // <-- TanStack Router
 
 	const handleConfirmar = async () => {
 		const invalidRows = registros.filter((r) => {
@@ -406,8 +409,11 @@ export default function RegistrosUploadPage() {
 							empleados,
 						})}
 					/>
-					<div className='flex w-full flex-col justify-start my-4 gap-4'>
-						<Button className='bg-green-800' onClick={() => handleConfirmar()}>
+					<div className='flex w-full flex-col justify-start my-4 gap-4 '>
+						<Button
+							className='bg-green-700 hover:bg-green-800 cursor-pointer'
+							onClick={() => handleConfirmar()}
+						>
 							Confirmar
 						</Button>
 					</div>
@@ -415,6 +421,16 @@ export default function RegistrosUploadPage() {
 						startDate={formatDate(minDate)}
 						endDate={formatDate(maxDate)}
 					/>
+					<Button
+						className='bg-blue-600 mt-4 cursor-pointer hover:bg-blue-800'
+						onClick={() =>
+							router.navigate({
+								to: '/',
+							})
+						}
+					>
+						Ya descargúe los archvios de Excel
+					</Button>
 				</div>
 			</Main>
 		</RegistrosProvider>

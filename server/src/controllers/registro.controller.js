@@ -11,11 +11,19 @@ class RegistroController {
   async downloadExcel(req, res) {
     const { startDate, endDate, format } = req.body;
 
+    console.log("Fechas recibidas:", startDate, endDate);
+
+    // Format: "2025-04-15" ➜ to "2025-04-15T00:00:00-05:00" and "2025-04-15T23:59:59-05:00"
+    const colombiaOffset = "-05:00";
+
+    const start = new Date(`${startDate}T00:00:00${colombiaOffset}`);
+    const end = new Date(`${endDate}T23:59:59${colombiaOffset}`);
+
     const registros = await prisma.registros.findMany({
       where: {
         fechaProduccion: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+          gte: start,
+          lte: end,
         },
       },
       include: {
@@ -23,6 +31,8 @@ class RegistroController {
         empleado: true,
       },
     });
+
+    console.log("Registros obtenidos:", registros);
 
     let workbook;
     if (format === "liberacion") {

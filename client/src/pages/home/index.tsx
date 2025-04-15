@@ -76,6 +76,12 @@ export default function Registros() {
 						Administra los registros cargados. Puedes revisar, editar o eliminar
 						registros.
 					</p>
+					{!fechaInicio || !fechaFin ? (
+						<p className='text-amber-600'>
+							Por favor seleccionar un rango de fechas para filtrar los
+							registros.
+						</p>
+					) : null}
 				</div>
 				<DialogUploaderDemo />
 			</div>
