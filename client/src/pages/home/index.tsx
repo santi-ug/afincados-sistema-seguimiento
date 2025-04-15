@@ -1,17 +1,33 @@
 import { Main } from '@/components/layout/main';
-import { getRegistros } from '@/lib/api/registros'; // 👈 cambias api productos -> registros
-import { Registro } from '@/lib/schemas/registros'; // 👈 tipo Registro
+import { getEmpleados } from '@/lib/api/empleados';
+import { getRegistros } from '@/lib/api/registros';
+import { Empleado } from '@/lib/schemas/empleados';
+import { Registro } from '@/lib/schemas/registros';
+import { addDays, isAfter, isBefore } from 'date-fns';
 import { useEffect, useState } from 'react';
-// import { Dialogs } from './components/dialogs'; // 👈 ya te lo adaptaré si quieres
-import { columns } from './components/registros-columns'; // 👈 columnas de registros
-import { RegistrosTable } from './components/registros-table'; // 👈 tabla de registros
-import { DialogUploaderDemo } from './components/registros-upload-excel'; // 👈 botón de acciones principales
-import { RegistrosProvider } from './context/registros-context'; // 👈 context de registros
+import { columns } from './components/registros-columns';
+import { RegistrosTable } from './components/registros-table';
+import { DialogUploaderDemo } from './components/registros-upload-excel';
 
 export default function Registros() {
 	const [registros, setRegistros] = useState<Registro[]>([]);
+	const [empleados, setEmpleados] = useState<Empleado[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
+	const [fechaFin, setFechaFin] = useState<Date | null>(null);
+
+	const fetchEmpleados = async () => {
+		try {
+			const data = await getEmpleados();
+			setEmpleados(data);
+		} catch (err) {
+			setError('Error fetching empleados');
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const fetchRegistros = async () => {
 		try {
@@ -27,6 +43,7 @@ export default function Registros() {
 
 	useEffect(() => {
 		fetchRegistros();
+		fetchEmpleados();
 	}, []);
 
 	if (loading) {
@@ -37,24 +54,43 @@ export default function Registros() {
 		return <div>{error}</div>;
 	}
 
-	return (
-		<RegistrosProvider>
-			<Main>
-				<div className='w-full mb-2 flex flex-wrap items-center justify-between space-y-2'>
-					<div>
-						<h2 className='text-2xl font-bold tracking-tight'>Registros</h2>
-						<p className='text-muted-foreground'>
-							Administra los registros cargados. Puedes revisar, editar o
-							eliminar registros.
-						</p>
-					</div>
-					<DialogUploaderDemo />
-				</div>
+	const filteredRegistros =
+		fechaInicio && fechaFin
+			? registros.filter((registro) => {
+					const fecha = registro.fechaProduccion;
+					return (
+						fecha instanceof Date &&
+						!isNaN(fecha.getTime()) &&
+						!isBefore(fecha, fechaInicio) &&
+						!isAfter(fecha, addDays(fechaFin, 1))
+					);
+				})
+			: [];
 
-				<div className='flex-1 overflow-auto py-1'>
-					<RegistrosTable data={registros} columns={columns} />
+	return (
+		<Main>
+			<div className='w-full mb-2 flex flex-wrap items-center justify-between space-y-2'>
+				<div>
+					<h2 className='text-2xl font-bold tracking-tight'>Registros</h2>
+					<p className='text-muted-foreground'>
+						Administra los registros cargados. Puedes revisar, editar o eliminar
+						registros.
+					</p>
 				</div>
-			</Main>
-		</RegistrosProvider>
+				<DialogUploaderDemo />
+			</div>
+
+			<div className='flex-1 overflow-auto py-1'>
+				<RegistrosTable
+					data={filteredRegistros}
+					columns={columns}
+					empleados={empleados}
+					fechaInicio={fechaInicio}
+					setFechaInicio={setFechaInicio}
+					fechaFin={fechaFin}
+					setFechaFin={setFechaFin}
+				/>
+			</div>
+		</Main>
 	);
 }

@@ -19,7 +19,7 @@ export function buildCheckmarkColumn({
 	label,
 	registros,
 	handleCellEdit,
-	handleMassiveEdit, // make sure we destructure it here!
+	handleMassiveEdit,
 }: BuildCheckmarkColumnOptions): ColumnDef<Registro> {
 	return {
 		accessorKey: field,
@@ -35,12 +35,19 @@ export function buildCheckmarkColumn({
 						className='-ml-8 mt-0.5'
 						checked={allChecked ? true : someChecked ? 'indeterminate' : false}
 						onCheckedChange={(value) => {
-							const updates = registros.map((r) => ({
-								rowId: r.id,
-								field: field,
-								value: !!value,
-							}));
-							handleMassiveEdit(updates); // 🔥 Use massive edit instead of per-row editing
+							const desiredState = !!value;
+
+							const updates = registros
+								.filter((r) => r[field] !== desiredState) // 🔥 Only update different ones
+								.map((r) => ({
+									rowId: r.id,
+									field,
+									value: desiredState,
+								}));
+
+							if (updates.length > 0) {
+								handleMassiveEdit(updates);
+							}
 						}}
 						aria-label={`Seleccionar todos los ${label}`}
 					/>

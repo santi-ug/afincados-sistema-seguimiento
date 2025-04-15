@@ -123,6 +123,7 @@ class RegistroController {
         empaqueConforme,
         libera,
         accionesCorrectivas,
+        nombreProducto,
       } = req.body;
 
       const registroActualizado = await prisma.registros.update({
@@ -156,6 +157,7 @@ class RegistroController {
           empaqueConforme,
           libera,
           accionesCorrectivas,
+          nombreProducto,
         },
       });
 
@@ -221,6 +223,7 @@ class RegistroController {
             empaqueConforme: registro.empaqueConforme,
             libera: registro.libera,
             accionesCorrectivas: registro.accionesCorrectivas,
+            nombreProducto: registro.nombreProducto,
           },
         });
       });

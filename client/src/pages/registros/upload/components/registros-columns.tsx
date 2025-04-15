@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
 	Select,
 	SelectContent,
@@ -12,11 +11,14 @@ import { generateLoteCode } from '@/lib/lote-generator';
 import { Empleado } from '@/lib/schemas/empleados';
 import { Producto } from '@/lib/schemas/productos';
 import { Registro } from '@/lib/schemas/registros';
-import { cn, formatDateToYYYYMMDD } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
 import { buildCheckmarkColumn } from './build-checkmark-column';
 import { buildInputColumn } from './build-input-column';
+import { buildInputColumnText } from './build-input-column-text';
 import { DataTableColumnHeader } from './data-table-column-header';
+import { HoraCell } from './hora-cell';
+import { PaquetesCantidadCell } from './paquetes-cantidad-cell';
+import { TextAreaCell } from './text-area-cell';
 
 interface UploadColumnsOptions {
 	handleCellEdit: (rowId: number, field: keyof Registro, value: any) => void;
@@ -38,6 +40,12 @@ export function getUploadColumns({
 	productos,
 	empleados,
 }: UploadColumnsOptions): ColumnDef<Registro>[] {
+	const productoMap = new Map(productos.map((p) => [p.id, p.nombre]));
+	const productoCategoriaMap = new Map(
+		productos.map((p) => [p.id, p.categoria])
+	);
+	const empleadoNombreMap = new Map(empleados.map((e) => [e.nombre, e.id]));
+
 	return [
 		buildInputColumn({
 			field: 'fechaProduccion',
@@ -45,10 +53,7 @@ export function getUploadColumns({
 			registros,
 			handleCellEdit,
 			handleMassiveEditWithLogic,
-			placeholderHeader: 'YYYY-MM-DD',
-			placeholderCell: 'YYYY-MM-DD',
 		}),
-
 		{
 			accessorKey: 'nombreProducto',
 			header: ({ column }) => (
@@ -56,14 +61,16 @@ export function getUploadColumns({
 			),
 			cell: ({ row }) => {
 				const registro = row.original as Registro;
-				const producto = productos.find((p) => p.id === registro.productoId);
+				const nombreProducto = registro.productoId
+					? productoMap.get(registro.productoId)
+					: null;
 
-				if (producto && registro.nombreProducto !== producto.nombre) {
-					handleCellEdit(registro.id, 'nombreProducto', producto.nombre);
+				if (nombreProducto && registro.nombreProducto !== nombreProducto) {
+					handleCellEdit(registro.id, 'nombreProducto', nombreProducto);
 				}
 
 				return (
-					<div className='flex justify-start'>{producto?.nombre ?? '—'}</div>
+					<div className='flex justify-start'>{nombreProducto ?? '—'}</div>
 				);
 			},
 			size: 220,
@@ -112,9 +119,7 @@ export function getUploadColumns({
 
 				const productoId = registro.productoId?.toString() || '';
 				const empleadoId = registro.empleadoId?.toString() || '';
-				const productionDate = registro.fechaProduccion
-					? new Date(registro.fechaProduccion)
-					: undefined;
+				const productionDate = registro.fechaProduccion ?? undefined;
 
 				// 🔥 If any required info missing, don't even call generateLoteCode
 				if (!productoId || !empleadoId || !productionDate) {
@@ -144,44 +149,72 @@ export function getUploadColumns({
 			cell: ({ row }) => {
 				const vencimiento = row.getValue('fechaVencimiento');
 
-				// 🔥 Si no existe (null, undefined, vacío)
-				if (!vencimiento) {
-					return (
-						<div className='flex justify-start text-red-600'>
-							Fecha inválida
-						</div>
-					);
-				}
-
-				// 🔥 Si es string tipo "Fecha inválida"
-				if (typeof vencimiento === 'string') {
-					return (
-						<div className='flex justify-start text-red-600'>{vencimiento}</div>
-					);
-				}
-
-				// 🔥 Si es Date válido
 				if (vencimiento instanceof Date && !isNaN(vencimiento.getTime())) {
 					return (
 						<div className='flex justify-start'>
-							{formatDateToYYYYMMDD(vencimiento)}
+							{vencimiento.toLocaleDateString()}{' '}
+							{/* 🔥 Pure, native browser formatting */}
 						</div>
 					);
 				}
 
-				// ❌ Si por alguna razón no es válido
+				// ❌ If it's null, undefined, or invalid
 				return (
 					<div className='flex justify-start text-red-600'>Fecha inválida</div>
 				);
 			},
 			size: 180,
 		},
-
 		{
 			accessorKey: 'empleadoNombre',
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title='Empleado' />
-			),
+			header: ({ column }) => {
+				const currentFilterValue = column.getFilterValue() as
+					| string
+					| undefined;
+
+				return (
+					<div className='flex justify-start'>
+						<DataTableColumnHeader column={column} title='Empleado' />
+						<Select
+							value={currentFilterValue || ''}
+							onValueChange={(newValue) => {
+								if (newValue) {
+									column.setFilterValue(newValue);
+
+									// 🔥 Now, use column.getFacetedRowModel()
+									const rows = column.getFacetedRowModel().rows;
+
+									handleMassiveEdit([
+										...rows.map((row) => ({
+											rowId: row.original.id,
+											field: 'empleadoNombre' as keyof Registro,
+											value: newValue,
+										})),
+										...rows.map((row) => ({
+											rowId: row.original.id,
+											field: 'empleadoId' as keyof Registro,
+											value: empleadoNombreMap.get(newValue) ?? null,
+										})),
+									]);
+								} else {
+									column.setFilterValue(undefined);
+								}
+							}}
+						>
+							<SelectTrigger className='h-8 w-40'>
+								<SelectValue placeholder='Actualizar todos' />
+							</SelectTrigger>
+							<SelectContent>
+								{empleados.map((emp) => (
+									<SelectItem key={emp.id} value={emp.nombre}>
+										{emp.nombre}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+				);
+			},
 			cell: ({ row }) => {
 				const value = row.getValue('empleadoNombre') as string;
 
@@ -254,21 +287,15 @@ export function getUploadColumns({
 			),
 			cell: ({ row }) => {
 				const registro = row.original as Registro;
-				const producto = productos.find((p) => p.id === registro.productoId);
+				const materialType = registro.productoId
+					? productoCategoriaMap.get(registro.productoId)
+					: null;
 
-				console.log(producto, registro.materialType);
-
-				if (producto && registro.materialType !== producto.categoria) {
-					handleCellEdit(
-						registro.id,
-						'materialType',
-						producto.categoria ?? null
-					);
+				if (materialType && registro.materialType !== materialType) {
+					handleCellEdit(registro.id, 'materialType', materialType ?? null);
 				}
 
-				return (
-					<div className='flex justify-start'>{producto?.categoria ?? '—'}</div>
-				);
+				return <div className='flex justify-start'>{materialType ?? '—'}</div>;
 			},
 			size: 200,
 		},
@@ -285,50 +312,33 @@ export function getUploadColumns({
 				<DataTableColumnHeader column={column} title='Paquetes' />
 			),
 			cell: ({ row }) => {
-				const value = row.getValue('paquetesCantidad');
+				const registro = row.original as Registro;
+				const paquetes = row.getValue('paquetesCantidad');
+				const cantidad = registro.cantidad;
 
-				// Pre-validate: if value is null, undefined, or NaN
-				const isInvalid =
-					value === null || value === undefined || isNaN(Number(value));
+				const value: number | null =
+					typeof paquetes === 'number'
+						? paquetes
+						: typeof cantidad === 'number'
+							? cantidad
+							: null;
+
+				// 🧠 Auto-set paquetesCantidad if missing
+				if (
+					(registro.paquetesCantidad === null ||
+						registro.paquetesCantidad === undefined) &&
+					typeof cantidad === 'number'
+				) {
+					handleCellEdit(registro.id, 'paquetesCantidad', cantidad);
+				}
 
 				return (
 					<div className='flex justify-start'>
-						<Input
-							type='number'
-							inputMode='numeric'
-							step='1'
-							min='0'
-							className={cn('h-8 w-24', isInvalid && 'border-red-500')}
-							defaultValue={
-								typeof value === 'number' ? value : value ? String(value) : ''
-							}
-							placeholder='0'
-							onBlur={(e) => {
-								const inputValue = e.target.value.trim();
-
-								// If empty, or invalid number → force red and clear
-								if (inputValue === '' || isNaN(Number(inputValue))) {
-									handleCellEdit(row.original.id, 'paquetesCantidad', null);
-									return;
-								}
-
-								const numericValue = parseInt(inputValue, 10);
-
-								// Save the integer
-								if (!isNaN(numericValue)) {
-									handleCellEdit(
-										row.original.id,
-										'paquetesCantidad',
-										numericValue
-									);
-								} else {
-									handleCellEdit(row.original.id, 'paquetesCantidad', null);
-								}
-							}}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									(e.target as HTMLInputElement).blur();
-								}
+						<PaquetesCantidadCell
+							initialValue={value}
+							rowId={registro.id}
+							handleSave={(rowId, newValue) => {
+								handleCellEdit(rowId, 'paquetesCantidad', newValue);
 							}}
 						/>
 					</div>
@@ -360,7 +370,7 @@ export function getUploadColumns({
 								}
 							}}
 						>
-							<SelectTrigger className='h-8 w-32'>
+							<SelectTrigger className='h-8 w-40'>
 								<SelectValue placeholder='Actualizar todos' />
 							</SelectTrigger>
 							<SelectContent>
@@ -399,7 +409,7 @@ export function getUploadColumns({
 			},
 			size: 200,
 		},
-		buildInputColumn({
+		buildInputColumnText({
 			field: 'cliente',
 			label: 'Cliente',
 			placeholderHeader: 'Ruta Unica',
@@ -408,6 +418,7 @@ export function getUploadColumns({
 			handleCellEdit,
 			handleMassiveEditWithLogic,
 		}),
+
 		buildCheckmarkColumn({
 			field: 'paramCalidadEmpaque',
 			label: 'Verificación Empaque',
@@ -437,45 +448,18 @@ export function getUploadColumns({
 			cell: ({ row }) => {
 				const value = row.getValue('hora') as string | null;
 
-				// 🕒 If value exists and is in valid format (HH:mm)
-				const displayValue =
-					typeof value === 'string' && /^\d{2}:\d{2}$/.test(value) ? value : '';
-
-				const isInvalid = value && !/^\d{2}:\d{2}$/.test(value);
-
 				return (
 					<div className='flex justify-start'>
-						<Input
-							type='text' // Now it's plain text (not <input type="time">)
-							className={cn('h-8 w-24', isInvalid && 'border-red-500')}
-							placeholder='--:--'
-							defaultValue={displayValue}
-							onBlur={(e) => {
-								const timeValue = e.target.value.trim();
-
-								// If empty, clear field
-								if (!timeValue) {
-									handleCellEdit(row.original.id, 'hora', null);
-									return;
-								}
-
-								// Validate HH:mm format
-								if (/^\d{2}:\d{2}$/.test(timeValue)) {
-									handleCellEdit(row.original.id, 'hora', timeValue);
-								} else {
-									// Still save invalid temporarily so it stays red
-									handleCellEdit(row.original.id, 'hora', timeValue);
-								}
-							}}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									(e.target as HTMLInputElement).blur();
-								}
+						<HoraCell
+							initialValue={value}
+							onSave={(newHora) => {
+								handleCellEdit(row.original.id, 'hora', newHora);
 							}}
 						/>
 					</div>
 				);
 			},
+
 			size: 120,
 		},
 
@@ -489,30 +473,16 @@ export function getUploadColumns({
 
 				return (
 					<div className='flex justify-start'>
-						<Input
-							type='text'
-							className={cn('h-8 w-48')}
-							defaultValue={value ?? ''}
-							placeholder='Opcional'
-							onBlur={(e) => {
-								const inputValue = e.target.value.trim();
-
-								// If empty, force red and null
-								if (inputValue === '') {
-									handleCellEdit(row.original.id, 'observaciones', null);
-								} else {
-									handleCellEdit(row.original.id, 'observaciones', inputValue);
-								}
-							}}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									(e.target as HTMLInputElement).blur();
-								}
+						<TextAreaCell
+							initialValue={value}
+							onSave={(newValue) => {
+								handleCellEdit(row.original.id, 'observaciones', newValue);
 							}}
 						/>
 					</div>
 				);
 			},
+
 			size: 200,
 		},
 		buildCheckmarkColumn({
@@ -567,34 +537,20 @@ export function getUploadColumns({
 
 				return (
 					<div className='flex justify-start'>
-						<Input
-							type='text'
-							className={cn('h-8 w-48')}
-							defaultValue={value ?? ''}
-							placeholder='Opcional'
-							onBlur={(e) => {
-								const inputValue = e.target.value.trim();
-
-								// If empty, force red and null
-								if (inputValue === '') {
-									handleCellEdit(row.original.id, 'accionesCorrectivas', null);
-								} else {
-									handleCellEdit(
-										row.original.id,
-										'accionesCorrectivas',
-										inputValue
-									);
-								}
-							}}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									(e.target as HTMLInputElement).blur();
-								}
+						<TextAreaCell
+							initialValue={value}
+							onSave={(newValue) => {
+								handleCellEdit(
+									row.original.id,
+									'accionesCorrectivas',
+									newValue
+								);
 							}}
 						/>
 					</div>
 				);
 			},
+
 			size: 200,
 		},
 		{

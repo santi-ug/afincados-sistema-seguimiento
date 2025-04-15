@@ -1,6 +1,14 @@
 import ExcelJS from "exceljs";
 import path from "path";
 
+function formatDateToDDMMYYYY(dateString) {
+  const date = new Date(dateString);
+  const year = date.getUTCFullYear();
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+  const day = date.getUTCDate().toString().padStart(2, "0");
+  return `${day}-${month}-${year}`;
+}
+
 async function buildLiberacionExcel(registros) {
   const workbook = new ExcelJS.Workbook();
   const templatePath = path.resolve(
@@ -17,10 +25,7 @@ async function buildLiberacionExcel(registros) {
     const row = worksheet.getRow(currentRow++);
 
     row.getCell(1).value = registro.fechaProduccion
-      ? new Date(registro.fechaProduccion)
-          .toLocaleDateString("en-GB")
-          .split("/")
-          .join("-")
+      ? formatDateToDDMMYYYY(registro.fechaProduccion)
       : "";
     row.getCell(2).value = registro.producto?.nombre
       ? `${registro.producto.nombre} x${registro.cantidad || 0}`
@@ -68,10 +73,7 @@ async function buildDespachoExcel(registros) {
 
     const row = worksheet.getRow(currentRow++);
     row.getCell(1).value = registro.fechaProduccion
-      ? new Date(registro.fechaProduccion)
-          .toLocaleDateString("en-GB")
-          .split("/")
-          .join("-")
+      ? formatDateToDDMMYYYY(registro.fechaProduccion)
       : "";
     if (registro.producto?.categoria === "CONDIMENTO") {
       row.getCell(2).value = registro.producto?.nombre || "";
@@ -141,20 +143,14 @@ async function buildEmpaqueExcel(registros) {
 
     const row = worksheet.getRow(currentRow++);
     row.getCell(1).value = registro.fechaProduccion
-      ? new Date(registro.fechaProduccion)
-          .toLocaleDateString("en-GB")
-          .split("/")
-          .join("-")
+      ? formatDateToDDMMYYYY(registro.fechaProduccion)
       : "";
     row.getCell(2).value = registro.producto?.nombre || "";
     row.getCell(3).value = `${registro.cantidad || 0} und`;
     row.getCell(4).value = `${registro.gramaje || 0}gr`;
     row.getCell(6).value = registro.lote || "";
     row.getCell(7).value = registro.fechaVencimiento
-      ? new Date(registro.fechaVencimiento)
-          .toLocaleDateString("en-GB")
-          .split("/")
-          .join("-")
+      ? formatDateToDDMMYYYY(registro.fechaVencimiento)
       : "";
     row.getCell(8).value = registro.paramCalidadEmpaque ? "✔" : "✘";
     row.getCell(9).value = registro.paramCalidadPeso ? "✔" : "✘";

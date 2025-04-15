@@ -1,10 +1,7 @@
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Registro } from '@/lib/schemas/registros';
-import { cn } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTableColumnHeader } from './data-table-column-header';
-import { DataTableRowActions } from './data-table-row-actions';
 
 export const columns: ColumnDef<Registro>[] = [
 	// ✅ Visible by default
@@ -249,43 +246,5 @@ export const columns: ColumnDef<Registro>[] = [
 			<DataTableColumnHeader column={column} title='Acciones Correctivas' />
 		),
 		cell: ({ row }) => <div>{row.getValue('accionesCorrectivas') ?? '—'}</div>,
-	},
-
-	// 👉 Select Column
-	{
-		id: 'select',
-		header: ({ table }) => (
-			<Checkbox
-				checked={
-					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && 'indeterminate')
-				}
-				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-				aria-label='Select all'
-				className='mb-3'
-			/>
-		),
-		cell: ({ row }) => (
-			<Checkbox
-				checked={row.getIsSelected()}
-				onCheckedChange={(value) => row.toggleSelected(!!value)}
-				aria-label='Select row'
-				className='mb-2'
-			/>
-		),
-		enableSorting: false,
-		enableHiding: false,
-		meta: {
-			className: cn(
-				'sticky left-0 z-10 rounded-tl',
-				'bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted'
-			),
-		},
-	},
-
-	// 👉 Actions Column
-	{
-		id: 'actions',
-		cell: ({ row }) => <DataTableRowActions row={row} />,
 	},
 ];

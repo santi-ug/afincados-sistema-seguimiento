@@ -1,4 +1,5 @@
 import { Main } from '@/components/layout/main';
+import { Button } from '@/components/ui/button';
 import { getEmpleados } from '@/lib/api/empleados';
 import { getProductos } from '@/lib/api/productos'; // 🚨 Import API to fetch productos
 import {
@@ -8,10 +9,10 @@ import {
 import { Empleado } from '@/lib/schemas/empleados';
 import { Producto } from '@/lib/schemas/productos'; // 🚨 Import Producto type
 import { Registro, RegistroUpdate } from '@/lib/schemas/registros';
-import { isValidDate, isValidDateYYYYMMDD } from '@/lib/utils'; // New helper!
 import { Route } from '@/routes/registros/upload/$archivoExcelId';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import DownloadExcelsButton from './components/download-excels-buttons';
 import { getUploadColumns } from './components/registros-columns';
 import { RegistrosTable } from './components/registros-table';
 import { RegistrosProvider } from './context/registros-context';
@@ -68,6 +69,7 @@ export default function RegistrosUploadPage() {
 			toast.error(
 				'Hay registros incompletos o inválidos. Corrige antes de confirmar.'
 			);
+			console.log('registros invalidos', invalidRows);
 			return;
 		}
 
@@ -112,15 +114,27 @@ export default function RegistrosUploadPage() {
 				}
 
 				if (field === 'fechaProduccion') {
-					if (isValidDateYYYYMMDD(value) && isValidDate(value)) {
-						const [year, month, day] = value.split('-').map(Number);
-						const fechaProduccionDate = new Date(year, month - 1, day);
-						const fechaVencimientoDate = new Date(fechaProduccionDate);
+					if (value instanceof Date && !isNaN(value.getTime())) {
+						const today = new Date();
+						today.setHours(0, 0, 0, 0); // Normalize today to midnight
 
-						fechaVencimientoDate.setDate(fechaVencimientoDate.getDate() + 365);
+						if (value <= today) {
+							const fechaProduccionDate = value;
+							const fechaVencimientoDate = new Date(fechaProduccionDate);
+							fechaVencimientoDate.setDate(
+								fechaVencimientoDate.getDate() + 365
+							);
 
-						updatedRow.fechaVencimiento = fechaVencimientoDate;
+							updatedRow.fechaProduccion = fechaProduccionDate;
+							updatedRow.fechaVencimiento = fechaVencimientoDate;
+						} else {
+							// Date is invalid (after today)
+							updatedRow.fechaProduccion = null;
+							updatedRow.fechaVencimiento = null;
+						}
 					} else {
+						// Invalid date object
+						updatedRow.fechaProduccion = null;
 						updatedRow.fechaVencimiento = null;
 					}
 				}
@@ -166,57 +180,105 @@ export default function RegistrosUploadPage() {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const handleMassiveEditWithLogic = (field: keyof Registro, value: any) => {
 		if (field === 'fechaProduccion') {
-			const isValid = isValidDateYYYYMMDD(value) && isValidDate(value);
+			if (value instanceof Date && !isNaN(value.getTime())) {
+				const today = new Date();
+				today.setHours(0, 0, 0, 0);
 
-			let fechaVencimientoDateOrText: Date | string;
-			if (isValid) {
-				const [year, month, day] = value.split('-').map(Number);
-				const fechaProduccionDate = new Date(year, month - 1, day);
-				const fechaVencimientoDate = new Date(fechaProduccionDate);
+				if (value <= today) {
+					const updates = registros.flatMap((r) => {
+						const fechaProduccionDate = value;
+						const fechaVencimientoDate = new Date(fechaProduccionDate);
+						fechaVencimientoDate.setDate(fechaVencimientoDate.getDate() + 365);
 
-				// Ensure the date doesn't exceed the maximum days in February
-				if (month === 2 && day > 28) {
-					const isLeapYear =
-						(year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-					if (!isLeapYear) {
-						fechaProduccionDate.setDate(28);
-						fechaVencimientoDate.setDate(28);
-					}
+						return [
+							{
+								rowId: r.id,
+								field: 'fechaProduccion',
+								value: fechaProduccionDate,
+							},
+							{
+								rowId: r.id,
+								field: 'fechaVencimiento',
+								value: fechaVencimientoDate,
+							},
+						];
+					});
+
+					setRegistros((prev) =>
+						prev.map((row) => {
+							const updateFechaProd = updates.find(
+								(u) => u.rowId === row.id && u.field === 'fechaProduccion'
+							);
+							const updateFechaVenc = updates.find(
+								(u) => u.rowId === row.id && u.field === 'fechaVencimiento'
+							);
+							if (updateFechaProd || updateFechaVenc) {
+								return {
+									...row,
+									fechaProduccion:
+										updateFechaProd?.value ?? row.fechaProduccion,
+									fechaVencimiento:
+										updateFechaVenc?.value ?? row.fechaVencimiento,
+								};
+							}
+							return row;
+						})
+					);
+				} else {
+					// Selected a date in the future — invalid
+					const updates = registros.flatMap((r) => [
+						{ rowId: r.id, field: 'fechaProduccion', value: null },
+						{ rowId: r.id, field: 'fechaVencimiento', value: null },
+					]);
+
+					setRegistros((prev) =>
+						prev.map((row) => {
+							const updateFechaProd = updates.find(
+								(u) => u.rowId === row.id && u.field === 'fechaProduccion'
+							);
+							const updateFechaVenc = updates.find(
+								(u) => u.rowId === row.id && u.field === 'fechaVencimiento'
+							);
+							if (updateFechaProd || updateFechaVenc) {
+								return {
+									...row,
+									fechaProduccion:
+										updateFechaProd?.value ?? row.fechaProduccion,
+									fechaVencimiento:
+										updateFechaVenc?.value ?? row.fechaVencimiento,
+								};
+							}
+							return row;
+						})
+					);
 				}
-
-				fechaVencimientoDate.setDate(fechaVencimientoDate.getDate() + 365);
-				fechaVencimientoDateOrText = fechaVencimientoDate;
 			} else {
-				fechaVencimientoDateOrText = 'Fecha Inválida';
+				// Invalid input (shouldn't happen but safe)
+				const updates = registros.flatMap((r) => [
+					{ rowId: r.id, field: 'fechaProduccion', value: null },
+					{ rowId: r.id, field: 'fechaVencimiento', value: null },
+				]);
+
+				setRegistros((prev) =>
+					prev.map((row) => {
+						const updateFechaProd = updates.find(
+							(u) => u.rowId === row.id && u.field === 'fechaProduccion'
+						);
+						const updateFechaVenc = updates.find(
+							(u) => u.rowId === row.id && u.field === 'fechaVencimiento'
+						);
+						if (updateFechaProd || updateFechaVenc) {
+							return {
+								...row,
+								fechaProduccion: updateFechaProd?.value ?? row.fechaProduccion,
+								fechaVencimiento:
+									updateFechaVenc?.value ?? row.fechaVencimiento,
+							};
+						}
+						return row;
+					})
+				);
 			}
-
-			const updates = registros.flatMap((r) => [
-				{ rowId: r.id, field: 'fechaProduccion', value },
-				{
-					rowId: r.id,
-					field: 'fechaVencimiento',
-					value: fechaVencimientoDateOrText,
-				},
-			]);
-
-			setRegistros((prev) =>
-				prev.map((row) => {
-					const updateFechaProd = updates.find(
-						(u) => u.rowId === row.id && u.field === 'fechaProduccion'
-					);
-					const updateFechaVenc = updates.find(
-						(u) => u.rowId === row.id && u.field === 'fechaVencimiento'
-					);
-					if (updateFechaProd || updateFechaVenc) {
-						return {
-							...row,
-							fechaProduccion: updateFechaProd?.value ?? row.fechaProduccion,
-							fechaVencimiento: updateFechaVenc?.value ?? row.fechaVencimiento,
-						};
-					}
-					return row;
-				})
-			);
 		} else if (field === 'cliente') {
 			setRegistros((prev) =>
 				prev.map((row) => {
@@ -289,6 +351,24 @@ export default function RegistrosUploadPage() {
 		fetchEmpleados();
 	}, [archivoExcelId]);
 
+	const formatDate = (date: Date) => {
+		return date.toISOString().split('T')[0]; // 'yyyy-mm-dd'
+	};
+
+	const fechasProduccion = registros
+		.map((r) => (r.fechaProduccion ? new Date(r.fechaProduccion) : null))
+		.filter((d): d is Date => d instanceof Date && !isNaN(d.getTime()));
+
+	const minDate =
+		fechasProduccion.length > 0
+			? new Date(Math.min(...fechasProduccion.map((d) => d.getTime())))
+			: new Date(); // fallback today
+
+	const maxDate =
+		fechasProduccion.length > 0
+			? new Date(Math.max(...fechasProduccion.map((d) => d.getTime())))
+			: new Date(); // fallback today
+
 	if (loading) {
 		return <div>Cargando registros...</div>;
 	}
@@ -308,6 +388,9 @@ export default function RegistrosUploadPage() {
 						<p className='text-muted-foreground'>
 							Completa los datos faltantes antes de generar los Excel.
 						</p>
+						<p className='text-red-500'>
+							Por favor hundir 'ENTER' al terminar de llenar campos de texto!
+						</p>
 					</div>
 				</div>
 
@@ -323,14 +406,15 @@ export default function RegistrosUploadPage() {
 							empleados,
 						})}
 					/>
-					<div className='w-full flex justify-end mt-4'>
-						<button
-							className='bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded'
-							onClick={handleConfirmar}
-						>
+					<div className='flex w-full flex-col justify-start my-4 gap-4'>
+						<Button className='bg-green-800' onClick={() => handleConfirmar()}>
 							Confirmar
-						</button>
+						</Button>
 					</div>
+					<DownloadExcelsButton
+						startDate={formatDate(minDate)}
+						endDate={formatDate(maxDate)}
+					/>
 				</div>
 			</Main>
 		</RegistrosProvider>

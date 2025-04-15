@@ -94,3 +94,19 @@ export async function deleteRegistro(id: string): Promise<void> {
 		throw error;
 	}
 }
+
+interface DownloadExcelParams {
+	startDate: string;
+	endDate: string;
+	format: 'liberacion' | 'despacho' | 'empaque';
+}
+
+export async function downloadExcel(
+	params: DownloadExcelParams
+): Promise<Blob> {
+	const response = await api.post('/registros/download-excel', params, {
+		responseType: 'blob', // 👈 VERY IMPORTANT! so Axios treats it as a file
+	});
+
+	return response.data;
+}

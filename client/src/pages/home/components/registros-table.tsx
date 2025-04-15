@@ -23,9 +23,10 @@ import {
 } from '@tanstack/react-table';
 import { useState } from 'react';
 
-import { Registro } from '@/lib/schemas/registros'; // 👈 ahora usamos Registro
-import { DataTablePagination } from './data-table-pagination'; // 👈 mismo paginador
-import { DataTableToolbar } from './data-table-toolbar'; // 👈 mismo toolbar
+import { Empleado } from '@/lib/schemas/empleados';
+import { Registro } from '@/lib/schemas/registros';
+import { DataTablePagination } from './data-table-pagination';
+import { DataTableToolbar } from './data-table-toolbar';
 
 declare module '@tanstack/react-table' {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -35,11 +36,24 @@ declare module '@tanstack/react-table' {
 }
 
 interface DataTableProps {
-	columns: ColumnDef<Registro>[]; // 👈 tipo de columnas para Registro
+	columns: ColumnDef<Registro>[];
 	data: Registro[];
+	empleados: Empleado[];
+	fechaInicio: Date | null;
+	setFechaInicio: (date: Date | null) => void;
+	fechaFin: Date | null;
+	setFechaFin: (date: Date | null) => void;
 }
 
-export function RegistrosTable({ columns, data }: DataTableProps) {
+export function RegistrosTable({
+	columns,
+	data,
+	empleados,
+	fechaInicio,
+	setFechaInicio,
+	fechaFin,
+	setFechaFin,
+}: DataTableProps) {
 	const [rowSelection, setRowSelection] = useState({});
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [sorting, setSorting] = useState<SortingState>([]);
@@ -100,7 +114,14 @@ export function RegistrosTable({ columns, data }: DataTableProps) {
 
 	return (
 		<div className='space-y-4'>
-			<DataTableToolbar table={table} />
+			<DataTableToolbar
+				table={table}
+				empleados={empleados}
+				fechaInicio={fechaInicio}
+				setFechaInicio={setFechaInicio}
+				fechaFin={fechaFin}
+				setFechaFin={setFechaFin}
+			/>
 			<div className='rounded-md border'>
 				<Table>
 					<TableHeader>

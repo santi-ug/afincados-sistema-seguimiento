@@ -99,6 +99,8 @@ export function RegistrosTable({ columns, data }: DataTableProps) {
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
+		enableMultiRowSelection: true,
+		enableSubRowSelection: false,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
@@ -114,7 +116,34 @@ export function RegistrosTable({ columns, data }: DataTableProps) {
 				<Table>
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow key={headerGroup.id} className='group/row'>
+							<TableRow
+								key={headerGroup.id}
+								className='group/row'
+								onPointerDownCapture={(e) => {
+									const target = e.target as HTMLElement;
+									if (
+										target.closest('input') ||
+										target.closest('textarea') ||
+										target.closest('button') ||
+										target.closest('select')
+									) {
+										e.stopPropagation();
+									}
+								}}
+								onBlurCapture={(e) => {
+									const related = e.relatedTarget as HTMLElement | null;
+									if (
+										related &&
+										(related.closest('input') ||
+											related.closest('textarea') ||
+											related.closest('button') ||
+											related.closest('select'))
+									) {
+										e.stopPropagation();
+										e.preventDefault();
+									}
+								}}
+							>
 								{headerGroup.headers.map((header) => (
 									<TableHead
 										key={header.id}
@@ -132,6 +161,7 @@ export function RegistrosTable({ columns, data }: DataTableProps) {
 							</TableRow>
 						))}
 					</TableHeader>
+
 					<TableBody>
 						{table.getRowModel().rows?.length ? (
 							table.getRowModel().rows.map((row) => (
@@ -139,6 +169,29 @@ export function RegistrosTable({ columns, data }: DataTableProps) {
 									key={row.id}
 									data-state={row.getIsSelected() && 'selected'}
 									className='group/row'
+									onPointerDownCapture={(e) => {
+										const target = e.target as HTMLElement;
+										if (
+											target.closest('input') ||
+											target.closest('textarea') ||
+											target.closest('button')
+										) {
+											e.stopPropagation();
+										}
+									}}
+									onBlurCapture={(e) => {
+										const related = e.relatedTarget as HTMLElement | null;
+
+										if (
+											related &&
+											(related.closest('input') ||
+												related.closest('textarea') ||
+												related.closest('button'))
+										) {
+											e.stopPropagation();
+											e.preventDefault();
+										}
+									}}
 								>
 									{row.getVisibleCells().map((cell) => (
 										<TableCell

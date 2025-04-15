@@ -1,5 +1,9 @@
+'use client';
+
+import { DatePickerCell } from '@/components/date-picker-cell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Empleado } from '@/lib/schemas/empleados';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { Table } from '@tanstack/react-table';
 import { DataTableFacetedFilter } from '../../../components/data-table-faceted-filter';
@@ -7,24 +11,60 @@ import { DataTableViewOptions } from '../../../components/data-table-view-option
 
 interface DataTableToolbarProps<TData> {
 	table: Table<TData>;
+	empleados: Empleado[];
+	fechaInicio: Date | null;
+	setFechaInicio: (date: Date | null) => void;
+	fechaFin: Date | null;
+	setFechaFin: (date: Date | null) => void;
 }
-
-// Opciones de ejemplo para Empleados (luego deberíamos cargarlos dinámicamente si quieres)
-const empleadosOptions = [
-	{ label: 'Empleado 1', value: '1' },
-	{ label: 'Empleado 2', value: '2' },
-	{ label: 'Empleado 3', value: '3' },
-];
 
 export function DataTableToolbar<TData>({
 	table,
+	empleados,
+	fechaInicio,
+	setFechaInicio,
+	fechaFin,
+	setFechaFin,
 }: DataTableToolbarProps<TData>) {
 	const isFiltered = table.getState().columnFilters.length > 0;
+
+	const empleadosOptions = empleados.map((emp) => ({
+		label: emp.nombre,
+		value: emp.id.toString(),
+	}));
 
 	return (
 		<div className='flex items-center justify-between'>
 			<div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
-				{/* Search Lote */}
+				{/* 🔥 Calendario reutilizable */}
+				<DatePickerCell
+					value={fechaInicio}
+					onChange={setFechaInicio}
+					label='Fecha inicio'
+				/>
+
+				<DatePickerCell
+					value={fechaFin}
+					onChange={setFechaFin}
+					label='Fecha fin'
+				/>
+
+				{/* 🔎 Filtro por producto */}
+				<Input
+					placeholder='Filtrar por nombre producto...'
+					value={
+						(table.getColumn('nombreProducto')?.getFilterValue() as string) ??
+						''
+					}
+					onChange={(event) =>
+						table
+							.getColumn('nombreProducto')
+							?.setFilterValue(event.target.value)
+					}
+					className='h-8 w-[150px] lg:w-[250px]'
+				/>
+
+				{/* 🔎 Filtro por lote */}
 				<Input
 					placeholder='Buscar por lote...'
 					value={(table.getColumn('lote')?.getFilterValue() as string) ?? ''}
@@ -34,30 +74,23 @@ export function DataTableToolbar<TData>({
 					className='h-8 w-[150px] lg:w-[250px]'
 				/>
 
-				<div className='flex gap-x-2'>
-					{/* Faceted filter por Empleado */}
-					{table.getColumn('empleadoId') && (
-						<DataTableFacetedFilter
-							column={table.getColumn('empleadoId')}
-							title='Empleado'
-							options={empleadosOptions}
-						/>
-					)}
-
-					{/* Faceted filter por Lote */}
-					{table.getColumn('lote') && (
-						<DataTableFacetedFilter
-							column={table.getColumn('lote')}
-							title='Lote'
-							options={[]} // Aquí luego podemos cargar dinámicamente lotes únicos si quieres
-						/>
-					)}
-				</div>
+				{/* 🎯 Filtro por empleado */}
+				{table.getColumn('empleadoId') && (
+					<DataTableFacetedFilter
+						column={table.getColumn('empleadoId')}
+						title='Empleado'
+						options={empleadosOptions}
+					/>
+				)}
 
 				{isFiltered && (
 					<Button
 						variant='ghost'
-						onClick={() => table.resetColumnFilters()}
+						onClick={() => {
+							table.resetColumnFilters();
+							setFechaInicio(null);
+							setFechaFin(null);
+						}}
 						className='h-8 px-2 lg:px-3'
 					>
 						Reset

@@ -8,21 +8,17 @@
  */
 export function generateLoteCode(
 	codigoProducto: string,
-	fechaInput: Date | string = new Date(),
+	fecha: Date = new Date(),
 	codigoEmpleado: string
 ): string {
-	const fecha =
-		typeof fechaInput === 'string'
-			? parseDateFromYYYYMMDDAndFix(fechaInput)
-			: fechaInput;
-
-	// Increment the day by 1 and handle month/year overflow
-	fecha.setDate(fecha.getDate() + 1);
+	if (!(fecha instanceof Date) || isNaN(fecha.getTime())) {
+		throw new Error('Fecha inválida en generateLoteCode');
+	}
 
 	// Limpiar para asegurar que el código del producto sean solo dígitos
 	const cleanProductCode = codigoProducto.replace(/\D/g, '').padStart(2, '0');
 
-	// Obtener día y mes
+	// Obtener día y mes directamente
 	const day = fecha.getDate().toString().padStart(2, '0');
 	const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
 
@@ -51,7 +47,6 @@ export function parseLoteCode(loteCode: string): {
 	sumaAño: string;
 	codigoEmpleado: string;
 } | null {
-	// Verificar que el código tenga el formato correcto (10 dígitos numéricos)
 	if (!/^\d{10}$/.test(loteCode)) {
 		return null;
 	}
@@ -90,15 +85,4 @@ export function getMonthName(monthNumber: string | number): string {
 			: monthNumber - 1;
 
 	return months[index] ?? '';
-}
-
-export function parseDateFromYYYYMMDDAndFix(input: string): Date {
-	const [year, month, day] = input.split('-').map(Number);
-
-	const date = new Date(year, month - 1, day);
-
-	// 🔥 Now manually add 1 day safely
-	date.setDate(date.getDate() + 1);
-
-	return date;
 }

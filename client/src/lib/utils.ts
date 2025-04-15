@@ -41,11 +41,14 @@ export function formatValueForInput(value: unknown): string {
 	return '';
 }
 
-export function isValidDate(input: string): boolean {
-	const date = new Date(input);
+export function isValidDate(date: Date): boolean {
+	if (!(date instanceof Date)) return false;
+	if (isNaN(date.getTime())) return false;
+
 	const today = new Date();
 	today.setHours(0, 0, 0, 0); // Normalize today's date to midnight
-	return !isNaN(date.getTime()) && date <= today;
+
+	return date <= today;
 }
 
 export function formatDateToYYYYMMDD(date: Date): string {
