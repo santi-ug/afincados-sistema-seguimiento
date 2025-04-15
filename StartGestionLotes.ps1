@@ -37,7 +37,7 @@ $backendJob = Start-Job -ScriptBlock {
 }
 
 # === ESPERA ===
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 1
 
 # === INICIA FRONTEND ===
 Write-Host "Iniciando cliente frontend..." -ForegroundColor Cyan
@@ -48,7 +48,7 @@ $frontendJob = Start-Job -ScriptBlock {
 }
 
 # === ABRE NAVEGADOR ===
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 1
 Start-Process "http://localhost:5173"
 
 Write-Host "`nTodo listo. La aplicacion esta corriendo." -ForegroundColor Green

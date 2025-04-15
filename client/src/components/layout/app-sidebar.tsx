@@ -1,5 +1,4 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Command } from 'lucide-react';
 import { sidebarData } from './data/sidebar-data';
 
 import {
@@ -26,8 +25,8 @@ export function AppSidebar() {
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton size='lg' className='cursor-default'>
-							<div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
-								<Command className='size-4' />
+							<div className='flex aspect-square size-8 items-center justify-center rounded-lg'>
+								<img src='/LOGO.png' alt='Logo' />
 							</div>
 							<div className='grid flex-1 text-left text-sm leading-tight'>
 								<span className='truncate font-semibold'>{team.name}</span>
