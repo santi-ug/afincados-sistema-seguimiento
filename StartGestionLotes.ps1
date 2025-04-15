@@ -1,7 +1,7 @@
 # GESTION LOTES RUN SCRIPT
 
 # === CONFIGURACION ===
-$projectPath = "C:\Users\Santi\Documents\PERSONAL\code\WORK\Afincados\system"
+$projectPath = "C:\Users\ELIZA\Documents\Gestion de Lotes"
 $backendPath = "$projectPath\server"
 $frontendPath = "$projectPath\client"
 
@@ -37,7 +37,7 @@ $backendJob = Start-Job -ScriptBlock {
 }
 
 # === ESPERA ===
-Start-Sleep -Seconds 1
+Start-Sleep -Seconds 3
 
 # === INICIA FRONTEND ===
 Write-Host "Iniciando cliente frontend..." -ForegroundColor Cyan
@@ -48,7 +48,7 @@ $frontendJob = Start-Job -ScriptBlock {
 }
 
 # === ABRE NAVEGADOR ===
-Start-Sleep -Seconds 1
+Start-Sleep -Seconds 3
 Start-Process "http://localhost:5173"
 
 Write-Host "`nTodo listo. La aplicacion esta corriendo." -ForegroundColor Green
