@@ -6,6 +6,7 @@ import {
 	getRegistrosByArchivoExcelId,
 	updateRegistrosBulk,
 } from '@/lib/api/registros';
+import { generateLoteCode } from '@/lib/lote-generator';
 import { Empleado } from '@/lib/schemas/empleados';
 import { Producto } from '@/lib/schemas/productos'; // 🚨 Import Producto type
 import { Registro, RegistroUpdate } from '@/lib/schemas/registros';
@@ -282,6 +283,29 @@ export default function RegistrosUploadPage() {
 					})
 				);
 			}
+		} else if (field === 'empleadoNombre') {
+			const empleado = empleados.find((e) => e.nombre === value);
+			const empleadoId = empleado?.id ?? null;
+
+			setRegistros((prev) =>
+				prev.map((row) => {
+					const newRow = {
+						...row,
+						empleadoNombre: value,
+						empleadoId: empleadoId,
+					};
+
+					if (newRow.productoId && newRow.fechaProduccion && empleadoId) {
+						newRow.lote = generateLoteCode(
+							newRow.productoId.toString(),
+							newRow.fechaProduccion,
+							empleadoId.toString()
+						);
+					}
+
+					return newRow;
+				})
+			);
 		} else if (field === 'cliente') {
 			setRegistros((prev) =>
 				prev.map((row) => {

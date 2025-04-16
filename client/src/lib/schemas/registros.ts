@@ -17,6 +17,7 @@ export const registroSchema = z.object({
 	cantidad: z.number(),
 
 	empleadoId: z.number().nullable(),
+	empleadoNombre: z.string().nullable().optional(),
 	fechaProduccion: z
 		.union([z.string(), z.date()])
 		.nullable()
@@ -65,6 +66,7 @@ export const registroInputSchema = z.object({
 	cantidad: z.number(),
 
 	empleadoId: z.number().nullable().optional(),
+	empleadoNombre: z.string().nullable().optional(),
 	fechaProduccion: z
 		.union([z.string(), z.date()])
 		.nullable()
@@ -117,6 +119,7 @@ export const registroUpdateSchema = z.object({
 	cantidad: z.number(),
 
 	empleadoId: z.number(),
+	empleadoNombre: z.string().nullable().optional(),
 	fechaProduccion: z
 		.union([z.string(), z.date()])
 		.transform((val) => (val ? new Date(val) : null)),

@@ -13,6 +13,7 @@ import { Producto } from '@/lib/schemas/productos';
 import { Registro } from '@/lib/schemas/registros';
 import { ColumnDef } from '@tanstack/react-table';
 import { buildCheckmarkColumn } from './build-checkmark-column';
+import { buildEmpleadoColumn } from './build-empleado-column';
 import { buildInputColumn } from './build-input-column';
 import { buildInputColumnText } from './build-input-column-text';
 import { DataTableColumnHeader } from './data-table-column-header';
@@ -44,7 +45,6 @@ export function getUploadColumns({
 	const productoCategoriaMap = new Map(
 		productos.map((p) => [p.id, p.categoria])
 	);
-	const empleadoNombreMap = new Map(empleados.map((e) => [e.nombre, e.id]));
 
 	return [
 		buildInputColumn({
@@ -115,29 +115,20 @@ export function getUploadColumns({
 				<DataTableColumnHeader column={column} title='Lote' />
 			),
 			cell: ({ row }) => {
-				const registro = row.original as Registro;
+				const registro = row.original;
+				const { productoId, empleadoId, fechaProduccion } = registro;
 
-				const productoId = registro.productoId?.toString() || '';
-				const empleadoId = registro.empleadoId?.toString() || '';
-				const productionDate = registro.fechaProduccion ?? undefined;
-
-				// 🔥 If any required info missing, don't even call generateLoteCode
-				if (!productoId || !empleadoId || !productionDate) {
+				if (!productoId || !empleadoId || !fechaProduccion) {
 					return <div className='flex justify-start'>—</div>;
 				}
 
-				const loteCode = generateLoteCode(
-					productoId,
-					productionDate,
-					empleadoId
+				const lote = generateLoteCode(
+					productoId.toString(),
+					fechaProduccion,
+					empleadoId.toString()
 				);
 
-				// 🔥 Si el registro.lote actual es distinto del que deberíamos tener, lo corregimos
-				if (registro.lote !== loteCode) {
-					handleCellEdit(registro.id, 'lote', loteCode);
-				}
-
-				return <div className='flex justify-start'>{loteCode}</div>;
+				return <div className='flex justify-start'>{lote}</div>;
 			},
 			size: 250,
 		},
@@ -165,109 +156,12 @@ export function getUploadColumns({
 			},
 			size: 180,
 		},
-		{
-			accessorKey: 'empleadoNombre',
-			header: ({ column }) => {
-				const currentFilterValue = column.getFilterValue() as
-					| string
-					| undefined;
 
-				return (
-					<div className='flex justify-start'>
-						<DataTableColumnHeader column={column} title='Empleado' />
-						<Select
-							value={currentFilterValue || ''}
-							onValueChange={(newValue) => {
-								if (newValue) {
-									column.setFilterValue(newValue);
-
-									// 🔥 Now, use column.getFacetedRowModel()
-									const rows = column.getFacetedRowModel().rows;
-
-									handleMassiveEdit([
-										...rows.map((row) => ({
-											rowId: row.original.id,
-											field: 'empleadoNombre' as keyof Registro,
-											value: newValue,
-										})),
-										...rows.map((row) => ({
-											rowId: row.original.id,
-											field: 'empleadoId' as keyof Registro,
-											value: empleadoNombreMap.get(newValue) ?? null,
-										})),
-									]);
-								} else {
-									column.setFilterValue(undefined);
-								}
-							}}
-						>
-							<SelectTrigger className='h-8 w-40'>
-								<SelectValue placeholder='Actualizar todos' />
-							</SelectTrigger>
-							<SelectContent>
-								{empleados.map((emp) => (
-									<SelectItem key={emp.id} value={emp.nombre}>
-										{emp.nombre}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-				);
-			},
-			cell: ({ row }) => {
-				const value = row.getValue('empleadoNombre') as string;
-
-				return (
-					<div className='flex justify-start'>
-						<Select
-							onValueChange={(newValue) => {
-								const empleado = empleados.find(
-									(emp) => emp.nombre === newValue
-								);
-
-								if (empleado) {
-									handleCellEdit(
-										row.original.id,
-										'empleadoNombre' as keyof Registro,
-										empleado.nombre
-									);
-									handleCellEdit(
-										row.original.id,
-										'empleadoId' as keyof Registro,
-										empleado.id
-									);
-								} else {
-									handleCellEdit(
-										row.original.id,
-										'empleadoNombre' as keyof Registro,
-										''
-									);
-									handleCellEdit(
-										row.original.id,
-										'empleadoId' as keyof Registro,
-										null
-									);
-								}
-							}}
-							defaultValue={value || undefined}
-						>
-							<SelectTrigger className='h-8 w-40'>
-								<SelectValue placeholder='Escoger empleado' />
-							</SelectTrigger>
-							<SelectContent>
-								{empleados.map((emp) => (
-									<SelectItem key={emp.id} value={emp.nombre}>
-										{emp.nombre}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-				);
-			},
-			size: 180,
-		},
+		buildEmpleadoColumn({
+			empleados,
+			handleCellEdit,
+			handleMassiveEditWithLogic,
+		}),
 		{
 			accessorKey: 'empleadoId',
 			header: 'Empleado ID',
@@ -276,7 +170,7 @@ export function getUploadColumns({
 					{row.original.empleadoId ?? '—'}
 				</div>
 			),
-			enableHiding: true, // 👈🏼 Para ocultarlo de la vista normal
+			enableHiding: true,
 		},
 		{
 			accessorKey: 'materialType',
@@ -418,7 +312,6 @@ export function getUploadColumns({
 			handleCellEdit,
 			handleMassiveEditWithLogic,
 		}),
-
 		buildCheckmarkColumn({
 			field: 'paramCalidadEmpaque',
 			label: 'Verificación Empaque',
@@ -462,7 +355,6 @@ export function getUploadColumns({
 
 			size: 120,
 		},
-
 		{
 			accessorKey: 'observaciones',
 			header: ({ column }) => (
@@ -561,7 +453,6 @@ export function getUploadColumns({
 			),
 			enableHiding: true,
 		},
-
 		{
 			accessorKey: 'archivoExcelId',
 			header: 'Archivo Excel ID',
