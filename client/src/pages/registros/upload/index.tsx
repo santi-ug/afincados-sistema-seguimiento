@@ -346,7 +346,14 @@ export default function RegistrosUploadPage() {
 		const fetchRegistros = async () => {
 			try {
 				const data = await getRegistrosByArchivoExcelId(Number(archivoExcelId));
-				setRegistros(data);
+
+				const sorted = [...data].sort((a, b) => {
+					if (a.rowNumber == null) return 1;
+					if (b.rowNumber == null) return -1;
+					return a.rowNumber - b.rowNumber;
+				});
+
+				setRegistros(sorted);
 			} catch (err) {
 				setError('Error fetching registros');
 				console.error(err);

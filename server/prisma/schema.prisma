@@ -55,6 +55,7 @@ model Registros {
   producto   Productos @relation(fields: [productoId], references: [id])
   gramaje    Int // Campo proveniente de la fila del Excel - debe validar que esté en la lista de gramajes del producto
   cantidad   Int // Campo proveniente de la fila del Excel
+  rowNumber  Int // Campo proveniente de la fila del Excel
 
   // excel 1
   fechaProduccion      DateTime? // Ingresado por el usuario

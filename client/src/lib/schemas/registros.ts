@@ -12,6 +12,8 @@ export const accionResultadoSchema = z.enum(['AC', 'RE']);
 // Single Registro
 export const registroSchema = z.object({
 	id: z.number(),
+	rowNumber: z.number().nullable().optional(),
+
 	productoId: z.string(),
 	gramaje: z.number(),
 	cantidad: z.number(),
@@ -56,11 +58,11 @@ export const registroSchema = z.object({
 	archivoExcelId: z.number().nullable(),
 });
 
-// Registro List
 export const registrosSchema = z.array(registroSchema);
 
-// Input for creation/update (almost same, except id missing)
 export const registroInputSchema = z.object({
+	rowNumber: z.number().nullable().optional(),
+
 	productoId: z.string(),
 	gramaje: z.number(),
 	cantidad: z.number(),
@@ -112,7 +114,8 @@ export const registroInputSchema = z.object({
 });
 
 export const registroUpdateSchema = z.object({
-	id: z.number(), // 🔥 You must have id to update
+	id: z.number(),
+	rowNumber: z.number().nullable().optional(),
 
 	productoId: z.string(),
 	gramaje: z.number(),
@@ -144,7 +147,6 @@ export const registroUpdateSchema = z.object({
 		message: 'Hora debe estar en formato HH:mm',
 	}),
 
-	// 🔥 These two only can be nullable:
 	observaciones: z.string().nullable(),
 	accionesCorrectivas: z.string().nullable(),
 
@@ -158,7 +160,6 @@ export const registroUpdateSchema = z.object({
 	archivoExcelId: z.number(),
 });
 
-// Registro List
 export const registrosUpdateSchema = z.array(registroUpdateSchema);
 
 export type Registro = z.infer<typeof registroSchema>;

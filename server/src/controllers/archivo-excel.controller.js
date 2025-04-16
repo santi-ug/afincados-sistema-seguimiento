@@ -23,7 +23,7 @@ class ArchivoExcelController {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      for (const row of jsonData) {
+      for (const [index, row] of jsonData.entries()) {
         const { nombre, cantidad } = row;
 
         if (!nombre) {
@@ -64,14 +64,13 @@ class ArchivoExcelController {
           continue;
         }
 
-        // 2. Crear un Registro asociado al ArchivoExcel
         await prisma.registros.create({
           data: {
-            productoId: product.id, // 🚀 ID explícito
+            productoId: product.id,
             cantidad: parseInt(cantidad),
             gramaje: parseInt(gramaje),
-            archivoExcelId: archivoExcel.id, // 🚀 ID explícito
-            // empleadoId: ...  (esto lo agregas cuando llegues a empleados)
+            archivoExcelId: archivoExcel.id,
+            rowNumber: index + 1, // 👈🏽 ¡Aquí está la magia!
           },
         });
       }
