@@ -133,6 +133,28 @@ export function getUploadColumns({
 			size: 250,
 		},
 		{
+			accessorKey: 'hora',
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title='Hora' />
+			),
+			cell: ({ row }) => {
+				const value = row.getValue('hora') as string | null;
+
+				return (
+					<div className='flex justify-start'>
+						<HoraCell
+							initialValue={value}
+							onSave={(newHora) => {
+								handleCellEdit(row.original.id, 'hora', newHora);
+							}}
+						/>
+					</div>
+				);
+			},
+
+			size: 120,
+		},
+		{
 			accessorKey: 'fechaVencimiento',
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title='Fecha Vencimiento' />
@@ -156,7 +178,6 @@ export function getUploadColumns({
 			},
 			size: 180,
 		},
-
 		buildEmpleadoColumn({
 			empleados,
 			handleCellEdit,
@@ -333,28 +354,6 @@ export function getUploadColumns({
 			handleCellEdit,
 			handleMassiveEdit,
 		}),
-		{
-			accessorKey: 'hora',
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title='Hora' />
-			),
-			cell: ({ row }) => {
-				const value = row.getValue('hora') as string | null;
-
-				return (
-					<div className='flex justify-start'>
-						<HoraCell
-							initialValue={value}
-							onSave={(newHora) => {
-								handleCellEdit(row.original.id, 'hora', newHora);
-							}}
-						/>
-					</div>
-				);
-			},
-
-			size: 120,
-		},
 		{
 			accessorKey: 'observaciones',
 			header: ({ column }) => (

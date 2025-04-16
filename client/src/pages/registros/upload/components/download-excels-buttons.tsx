@@ -17,8 +17,6 @@ export function DownloadExcelsButton({
 	const handleDownload = async (
 		type: 'liberacion' | 'despacho' | 'empaque'
 	) => {
-		console.log(startDate, endDate, type);
-
 		const downloadingToast = toast.loading(`Descargando ${type}...`);
 
 		try {

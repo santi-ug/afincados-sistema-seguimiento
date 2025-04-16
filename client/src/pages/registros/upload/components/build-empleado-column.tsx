@@ -40,9 +40,6 @@ export function buildEmpleadoColumn({
 								column.setFilterValue(undefined);
 								return;
 							}
-
-							column.setFilterValue(newValue);
-
 							handleMassiveEditWithLogic('empleadoNombre', newValue);
 						}}
 					>
