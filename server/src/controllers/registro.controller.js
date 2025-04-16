@@ -13,9 +13,7 @@ class RegistroController {
 
     console.log("Fechas recibidas:", startDate, endDate);
 
-    // Format: "2025-04-15" ➜ to "2025-04-15T00:00:00-05:00" and "2025-04-15T23:59:59-05:00"
     const colombiaOffset = "-05:00";
-
     const start = new Date(`${startDate}T00:00:00${colombiaOffset}`);
     const end = new Date(`${endDate}T23:59:59${colombiaOffset}`);
 
@@ -29,6 +27,9 @@ class RegistroController {
       include: {
         producto: true,
         empleado: true,
+      },
+      orderBy: {
+        rowNumber: "asc", // ✅ ordenar por fila original del Excel
       },
     });
 

@@ -30,7 +30,7 @@ async function buildLiberacionExcel(registros) {
       ? formatDateToDDMMYYYY(registro.fechaProduccion)
       : "";
     row.getCell(2).value = registro.producto?.nombre
-      ? `${registro.producto.nombre} x${registro.cantidad || 0}`
+      ? `${registro.producto.nombre} x${registro.gramaje || 0}`
       : "";
     row.getCell(3).value = registro.lote || "";
     row.getCell(6).value = registro.olor ? "✔" : "✘";
