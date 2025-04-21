@@ -19,6 +19,13 @@ import { getUploadColumns } from './components/registros-columns';
 import { RegistrosTable } from './components/registros-table';
 import { RegistrosProvider } from './context/registros-context';
 
+function getLastDaySameMonthNextYear(fechaProduccion: Date): Date {
+	const vencimiento = new Date(fechaProduccion);
+	vencimiento.setFullYear(vencimiento.getFullYear() + 1);
+	vencimiento.setMonth(vencimiento.getMonth() + 1, 0); // Ir al día 0 del mes siguiente = último día del mes actual
+	return vencimiento;
+}
+
 export default function RegistrosUploadPage() {
 	const { archivoExcelId } = Route.useParams();
 
@@ -124,10 +131,8 @@ export default function RegistrosUploadPage() {
 
 						if (value <= today) {
 							const fechaProduccionDate = value;
-							const fechaVencimientoDate = new Date(fechaProduccionDate);
-							fechaVencimientoDate.setDate(
-								fechaVencimientoDate.getDate() + 365
-							);
+							const fechaVencimientoDate =
+								getLastDaySameMonthNextYear(fechaProduccionDate);
 
 							updatedRow.fechaProduccion = fechaProduccionDate;
 							updatedRow.fechaVencimiento = fechaVencimientoDate;
@@ -191,8 +196,8 @@ export default function RegistrosUploadPage() {
 				if (value <= today) {
 					const updates = registros.flatMap((r) => {
 						const fechaProduccionDate = value;
-						const fechaVencimientoDate = new Date(fechaProduccionDate);
-						fechaVencimientoDate.setDate(fechaVencimientoDate.getDate() + 365);
+						const fechaVencimientoDate =
+							getLastDaySameMonthNextYear(fechaProduccionDate);
 
 						return [
 							{
